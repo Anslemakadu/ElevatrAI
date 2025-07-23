@@ -1,0 +1,32 @@
+# === Python-related ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# === Virtual Environment ===
+venv/
+
+# === Environment Variables ===
+.env
+.env.*
+
+# === Log, Cache, and Build Files ===
+*.log
+*.bak
+*.swp
+.cache/
+.pytest_cache/
+*.db
+*.sqlite3
+
+# === Editor Configs ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# === System Files ===
+.DS_Store
+Thumbs.db
