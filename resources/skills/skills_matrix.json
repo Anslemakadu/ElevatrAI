@@ -1,0 +1,26 @@
+{
+  "Machine Learning": [
+    "supervised learning", "unsupervised learning", "regression",
+    "classification", "scikit-learn", "xgboost", "lightgbm", "pytorch", "tensorflow"
+  ],
+  "Data Science": [
+    "pandas", "numpy", "matplotlib", "seaborn", "data wrangling",
+    "feature engineering", "EDA", "statistics", "hypothesis testing"
+  ],
+  "Backend Development": [
+    "python", "flask", "fastapi", "django", "sql", "postgresql", "mongodb", "rest api"
+  ],
+  "Frontend Development": [
+    "html", "css", "javascript", "react", "vue", "tailwind", "bootstrap"
+  ],
+  "DevOps": [
+    "docker", "kubernetes", "git", "ci/cd", "linux", "bash", "nginx"
+  ],
+  "Cloud": [
+    "aws", "gcp", "azure", "lambda", "s3", "cloud functions"
+  ],
+  "LLM & NLP": [
+    "nlp", "transformers", "huggingface", "llms", "bert", "gpt", "fine-tuning",
+    "text classification", "ner", "summarization"
+  ]
+}

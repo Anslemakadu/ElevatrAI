@@ -1,5 +1,6 @@
 # === Python-related ===
 __pycache__/
+__pycache__
 *.py[cod]
 *.pyo
 *.pyd
@@ -30,3 +31,8 @@ venv/
 # === System Files ===
 .DS_Store
 Thumbs.db
+
+# === ignore llm_server ===
+app/llm_server
+
+

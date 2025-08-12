@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ElevatrAI - Career Planner</title>
+  <style>
+    /* --- Theme & layout --- */
+    :root{
+      --bg:#0a192f;
+      --panel:#112240;
+      --muted:#9fb4d8;
+      --accent1:#0ea5e9;
+      --accent2:#3b82f6;
+      --card-border:#1e2e4a;
+      --input-bg:#0f172a;
+      --glass: rgba(255,255,255,0.03);
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,Arial,Helvetica,sans-serif}
+    header{background:linear-gradient(90deg,var(--accent1),var(--accent2));padding:20px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+    header h1{margin:0;font-weight:700;letter-spacing:-0.5px}
+    header p{margin:6px 0 0;color:rgba(255,255,255,0.9)}
+
+    main{max-width:880px;margin:28px auto;padding:20px}
+    .card{background:var(--panel);border:1px solid var(--card-border);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 6px 16px rgba(2,6,23,0.6)}
+    h2{color:var(--accent1);margin:0 0 12px 0;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.03)}
+
+    label{display:block;font-weight:600;margin:8px 0 6px 0;color:var(--muted)}
+    select, textarea, input[type="file"], input[type="text"]{
+      width:100%;padding:10px;border-radius:8px;border:1px solid #213450;background:var(--input-bg);color:#e6eef8;
+      box-sizing:border-box;font-size:14px;
+    }
+    textarea{min-height:96px;resize:vertical}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+
+    .checkbox-inline{display:flex;align-items:center;gap:10px;margin-top:10px}
+    .checkbox-inline input[type="checkbox"]{transform:scale(1.15);accent-color:var(--accent2)}
+    .note{font-size:13px;color:#9fb4d8;margin-top:6px}
+
+    .btn{display:inline-block;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:white;padding:10px 16px;border-radius:8px;border:none;font-weight:700;cursor:pointer}
+    .btn:disabled{opacity:0.55;cursor:default;transform:none}
+    .btn.secondary{background:#1f3b6a}
+
+    .output{background:var(--input-bg);border:1px solid #213450;padding:12px;border-radius:8px;color:#dfefff;white-space:pre-wrap;margin-top:12px}
+    .hidden{display:none}
+    .fade-in{animation:fadeIn .28s ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    .progress{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+    .step-pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
+    .step-pill.active{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#012033;font-weight:700}
+    .small{font-size:13px;color:#9fb4d8}
+  </style>
+</head>
+<body>
+  <!-- ================================
+       HEADER AREA
+       Static site title and tagline
+  =================================== -->
+  <header>
+    <h1>ElevatrAI</h1>
+    <p>Friendly, stepwise learning plans for real career progress</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <!-- ================================
+           PROGRESS PILLS (Step Indicators)
+           Highlighted as user advances
+      =================================== -->
+      <div class="progress">
+        <div class="step-pill active" id="pill-1">Step 1: Goal & Gap</div>
+        <div class="step-pill" id="pill-2">Step 2: Resources</div>
+        <div class="step-pill" id="pill-3">Step 3: Roadmap</div>
+      </div>
+
+      <!-- ================================
+           STEP 1 — Skill Gap Form
+           User enters career path, skills, resume
+      =================================== -->
+      <section id="step-1" class="fade-in">
+        <h2>Step 1 — Define goal & detect gap</h2>
+
+        <!--
+          NOTE:
+          We keep the <form> tag for structure, but
+          JavaScript will handle submission via fetch().
+          action & method are not used in this flow
+        -->
+        <form id="skill-gap-form" enctype="multipart/form-data" class="step-form">
+
+          <!-- Target role dropdown -->
+          <label for="career_path">Target role</label>
+          <select id="career_path" name="career_path" required>
+            <option value="ml_engineer">Machine Learning Engineer</option>
+            <option value="data_scientist">Data Scientist</option>
+            <option value="backend_engineer">Backend Engineer</option>
+            <option value="devops_engineer">DevOps Engineer</option>
+            <option value="frontend_engineer">Frontend Engineer</option>
+          </select>
+
+          <!-- Skills text input -->
+          <div class="form-group">
+            <label for="skills">Your Skills (comma-separated)</label>
+            <input type="text" id="skills" name="skills" placeholder="e.g. Python, SQL, Flask">
+          </div>
+
+          <!-- Resume file upload -->
+          <div class="form-group">
+            <label for="resume">Resume (optional)</label>
+            <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx">
+          </div>
+
+          <!-- No skills checkbox -->
+          <div class="checkbox-inline">
+            <input id="no_resume" name="from_scratch" type="checkbox" value="true">
+            <label for="no_resume" class="small">
+              I don't have a resume or skills yet (Beginner)
+            </label>
+          </div>
+
+          <!-- Step 1 submit button -->
+          <div style="margin-top:12px">
+            <!-- type="button" prevents normal form POST -->
+            <button id="btn-gap" type="button" class="btn">
+              Analyze Skill Gap
+            </button>
+            <span class="note" id="gap-note">
+              We will detect the most important skill to start with and return a short motivating analysis.
+            </span>
+          </div>
+
+          <!-- Where skill gap output will appear -->
+          <pre id="skill-gap-output" class="output hidden"></pre>
+
+        </form>
+      </section>
+
+      <!-- ================================
+           STEP 2 — Starter Resources
+           Hidden until Step 1 completes
+      =================================== -->
+      <section id="step-2" class="card hidden">
+        <h2>Step 2 — Starter Resources</h2>
+        <p class="small">Quick, curated free resources to begin right away.</p>
+
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button id="btn-resources" class="btn secondary" disabled>
+            Get Starter Resources
+          </button>
+          <div style="flex:1"></div>
+        </div>
+
+        <div id="resources-container" class="fade-in"></div>
+        <div id="resources-output" class="output hidden"></div>
+      </section>
+
+      <!-- Card style for resources -->
+      <style>
+        #resources-container {
+          display: grid;
+          gap: 1rem;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          margin-top: 1rem;
+        }
+        .resource-card {
+          background: var(--panel);
+          color: white;
+          border-radius: 10px;
+          padding: 1rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          transition: transform 0.2s ease;
+          border: 1px solid var(--card-border);
+        }
+        .resource-card:hover {
+          transform: translateY(-3px);
+        }
+        .resource-card a {
+          color: var(--accent1);
+          text-decoration: none;
+        }
+        .resource-card h3 {
+          color: var(--accent2);
+          margin: 0 0 0.5rem 0;
+          font-size: 1.1rem;
+        }
+        .resource-card p {
+          margin: 0 0 1rem 0;
+          color: var(--muted);
+          font-size: 0.9rem;
+        }
+      </style>
+
+      <!-- ================================
+           STEP 3 — Roadmap
+           Hidden until Step 2 completes
+      =================================== -->
+      <section id="step-3" class="card hidden">
+        <h2>Step 3 — Full Roadmap</h2>
+        <p class="small">3–5 stage roadmap, outcomes, durations and projects.</p>
+
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button id="btn-roadmap" class="btn" disabled>
+            Generate Learning Roadmap
+          </button>
+        </div>
+
+        <div id="roadmap-output" class="output hidden"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ================================
+       JAVASCRIPT SECTION
+       Controls the 3-step flow
+  =================================== -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+      // ================================
+      // Grab DOM elements for all steps
+      // ================================
+      const step2Card = document.getElementById('step-2');
+      const step3Card = document.getElementById('step-3');
+
+      const pill1 = document.getElementById('pill-1'),
+            pill2 = document.getElementById('pill-2'),
+            pill3 = document.getElementById('pill-3');
+
+      const btnGap = document.getElementById('btn-gap');
+      const btnRes = document.getElementById('btn-resources');
+      const btnRoad = document.getElementById('btn-roadmap');
+
+      const gapOut = document.getElementById('skill-gap-output');
+      const resOut = document.getElementById('resources-output');
+      const roadOut = document.getElementById('roadmap-output');
+
+      let lastAnalysis = null;
+      let lastResources = null;
+
+      // ================================
+      // Helper: Show Step 2
+      // ================================
+      function showStep2() {
+          step2Card.classList.remove('hidden');
+          step2Card.classList.add('fade-in');
+          pill2.classList.add('active');
+          btnRes.disabled = false;
+          step2Card.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+
+      // ================================
+      // Helper: Show Step 3
+      // ================================
+      function showStep3() {
+          step3Card.classList.remove('hidden');
+          step3Card.classList.add('fade-in');
+          pill3.classList.add('active');
+          btnRoad.disabled = false;
+          step3Card.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+
+      // ================================
+      // Helper: Button loading state
+      // ================================
+      function setLoading(btn, on=true) {
+          btn.disabled = on;
+          btn.innerText = on
+              ? 'Working...'
+              : (btn === btnGap
+                  ? 'Analyze Skill Gap'
+                  : (btn === btnRes
+                      ? 'Get Starter Resources'
+                      : 'Generate Learning Roadmap'));
+      }
+
+      // ================================
+      // STEP 1: Analyze Skill Gap
+      // ================================
+      btnGap.addEventListener('click', async () => {
+          // Collect input values
+          const career = document.getElementById('career_path').value;
+          const skills = document.getElementById('skills').value.trim();
+          const noResume = document.getElementById('no_resume').checked;
+          const resumeFile = document.getElementById('resume').files[0];
+
+          // Clear previous output with debug logging
+          console.log("📤 Step 1 Triggered");
+          console.log("Career Path:", career);
+          console.log("Skills:", skills);
+          console.log("No Resume Checkbox:", noResume);
+          console.log("Resume File Selected:", resumeFile ? resumeFile.name : "None");
+
+          if (!noResume && !skills && !resumeFile) {
+              gapOut.innerText = '⚠️ Please enter your skills, upload a resume, or check "I don\'t have skills yet"';
+              gapOut.classList.remove('hidden');
+              return;
+          }
+
+          setLoading(btnGap, true);
+          gapOut.classList.add('hidden');
+
+          try {
+              let r;
+
+              if (resumeFile) {
+                  console.log("📦 Sending multipart/form-data request with resume...");
+                  const formData = new FormData();
+                  formData.append('career_path', career);
+                  formData.append('from_scratch', noResume);
+                  formData.append('resume', resumeFile);
+
+                  if (skills) {
+                      formData.append('skills', skills);
+                  }
+
+                  // Debug: log what's in the FormData
+                  for (let [key, value] of formData.entries()) {
+                      console.log(`FormData field: ${key}`, value instanceof File ? value.name : value);
+                  }
+
+                  r = await fetch('/skill-gap', {
+                      method: 'POST',
+                      body: formData
+                  });
+
+              } else {
+                  console.log("📦 Sending JSON request (no resume)...");
+                  const payload = {
+                      career_path: career,
+                      skills: skills,
+                      input_mode: 'manual',
+                      from_scratch: noResume
+                  };
+                  console.log("Payload:", payload);
+
+                  r = await fetch('/skill-gap', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                  });
+              }
+
+              if (!r.ok) {
+                  const errorData = await r.json();
+                  throw new Error(errorData.message || `Server error: ${r.status}`);
+              }
+
+              const data = await r.json();
+              console.log("📥 Response Data:", data);
+
+              lastAnalysis = data.analysis || data;
+              gapOut.innerText = JSON.stringify(lastAnalysis, null, 2);
+              gapOut.classList.remove('hidden');
+
+              showStep2();
+
+          } catch (err) {
+              console.error("❌ Step 1 Error:", err);
+              gapOut.innerText = '⚠️ Error detecting skill gap: ' + err.message;
+              gapOut.classList.remove('hidden');
+          } finally {
+              setLoading(btnGap, false);
+          }
+      });
+
+      // ================================
+      // STEP 2: Get Starter Resources
+      // ================================
+      btnRes.addEventListener('click', async () => {
+          if (!lastAnalysis) {
+              alert('Run Step 1 first');
+              return;
+          }
+
+          setLoading(btnRes, true);
+          resOut.classList.add('hidden');
+
+          try {
+              const primary = (lastAnalysis.missing_skills && lastAnalysis.missing_skills[0])
+                  || lastAnalysis.recommendation
+                  || null;
+
+              const payload = { skill: primary, context: lastAnalysis };
+
+              const r = await fetch('/starter-resources', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+              });
+
+              if (!r.ok) throw new Error('Server error: ' + r.status);
+
+              const data = await r.json();
+              lastResources = data.resources || data;
+
+              const container = document.getElementById('resources-container');
+              container.innerHTML = '';
+
+              lastResources.forEach(r => {
+                  const card = document.createElement('div');
+                  card.className = 'resource-card';
+                  card.innerHTML = `
+                      <h3>${r.title || r.name}</h3>
+                      <p>${r.description}</p>
+                      <a href="${r.url}" target="_blank">Learn More →</a>
+                  `;
+                  container.appendChild(card);
+              });
+
+              showStep3();
+
+          } catch (err) {
+              resOut.innerText = '⚠️ Error getting resources: ' + err.message;
+              resOut.classList.remove('hidden');
+          } finally {
+              setLoading(btnRes, false);
+          }
+      });
+
+      // ================================
+      // STEP 3: Generate Learning Roadmap
+      // ================================
+      btnRoad.addEventListener('click', async () => {
+          if (!lastAnalysis) {
+              alert('Run steps 1 and 2 first');
+              return;
+          }
+
+          setLoading(btnRoad, true);
+          roadOut.classList.add('hidden');
+
+          try {
+              const payload = {
+                  analysis: lastAnalysis,
+                  resources: lastResources || [],
+                  context: { career_path: document.getElementById('career_path').value }
+              };
+
+              const r = await fetch('/roadmap', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+              });
+
+              if (!r.ok) throw new Error('Server error: ' + r.status);
+
+              const data = await r.json();
+              const pretty = {
+                  roadmap: data.roadmap || data,
+                  final_message: data.final_message || data.summary || ''
+              };
+
+              roadOut.innerText = JSON.stringify(pretty, null, 2);
+              roadOut.classList.remove('hidden');
+
+              window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+          } catch (err) {
+              roadOut.innerText = '⚠️ Error building roadmap: ' + err.message;
+              roadOut.classList.remove('hidden');
+          } finally {
+              setLoading(btnRoad, false);
+          }
+      });
+
+  });
+  </script>
+</body>
+</html>
