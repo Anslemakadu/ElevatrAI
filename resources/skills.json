@@ -1,0 +1,37 @@
+{
+  "machine_learning_engineer": {
+    "core_skills": [
+      "Python", "Pandas", "NumPy", "Scikit-learn",
+      "Linear Algebra", "Statistics", "ML Algorithms"
+    ],
+    "description": "ML Engineers build and deploy machine learning systems in production."
+  },
+  "data_analyst": {
+    "core_skills": [
+      "SQL", "Excel", "Tableau", "Python",
+      "Statistics", "Data Cleaning"
+    ],
+    "description": "Data Analysts explore and interpret data to support business decisions."
+  },
+    "data_scientist": {
+        "core_skills": [
+        "Python", "R", "Machine Learning", "Statistics",
+        "Data Visualization", "Big Data Technologies"
+        ],
+        "description": "Data Scientists analyze complex data to extract insights and build predictive models."
+    },
+    "backend_developer": {
+        "core_skills": [
+        "Python", "Django", "Flask", "SQL",
+        "REST APIs", "Docker", "Git"
+        ],
+        "description": "Backend Developers create server-side applications and manage databases."
+    },
+    "frontend_developer": {
+        "core_skills": [
+        "HTML", "CSS", "JavaScript", "React",
+        "Responsive Design", "Git"
+        ],
+        "description": "Frontend Developers build user interfaces and ensure a seamless user experience."
+    }
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Results - ElevatrAI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #444;
+    }
+    h1, h2 {
+      color: #40e0d0;
+    }
+    pre {
+      background-color: #222;
+      padding: 10px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .label {
+      font-weight: bold;
+      color: #ffa500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 ElevatrAI Career Results</h1>
+
+    <h2>👤 Target Role: {{ role_display_name }}</h2>
+
+    <p><span class="label">Mode Used:</span> {{ user_mode | capitalize }}</p>
+    <p><span class="label">Skills Extracted:</span> {{ skills }}</p>
+
+    <h2>📄 Resume / Skill Summary</h2>
+    <pre>{{ resume_text }}</pre>
+
+    <h2>📘 Personalized Learning Plan</h2>
+    <pre>{{ learning_plan }}</pre>
+
+    <br>
+    <a href="/" style="color:#40e0d0;">⬅️ Back to Home</a>
+  </div>
+</body>
+</html>
