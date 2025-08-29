@@ -48,3 +48,6 @@ coverage.xml     # Coverage XML report
 # --- End of .gitignore ---
 
 
+venv/
+__pycache__/
+*.pyc
