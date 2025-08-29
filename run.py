@@ -27,13 +27,16 @@ Usage:
 Author: Anslem Akadu
 Project: ElevatrAI - AI-Powered Career Development Platform
 """
-import os
+print("=== run.py is being loaded ===")
 from app import create_app
+print("=== app imported successfully ===")
 
 # Initialize the Flask application with our factory pattern
 app = create_app()
+print("=== app created successfully ===")
 
 if __name__ == "__main__":
+    import os
     # Load environment-specific settings
     port = int(os.getenv("PORT", 5000))
     debug = os.getenv("FLASK_ENV", "production") == "development"
