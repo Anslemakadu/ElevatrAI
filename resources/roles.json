@@ -1,0 +1,44 @@
+{
+  "ml_engineer": {
+    "career": "Machine Learning Engineer",
+    "category": "Machine Learning",
+    "description": "Builds and deploys ML systems",
+    "skills": ["python", "numpy", "pandas", "scikit-learn", "pytorch", "tensorflow", "machine learning"]
+  },
+  "data_scientist": {
+    "career": "Data Scientist",
+    "category": "Data Science",
+    "description": "Analyzes and interprets data",
+    "skills": ["python", "numpy", "pandas", "matplotlib", "scikit-learn", "sql", "statistics"]
+  },
+  "backend_engineer": {
+    "career": "Backend Developer",
+    "category": "Backend Development",
+    "description": "Builds APIs and server logic",
+    "skills": ["python", "flask", "django", "fastapi", "sql", "postgresql", "rest api"]
+  },
+  "frontend_engineer": {
+    "career": "Frontend Developer",
+    "category": "Frontend Development",
+    "description": "Creates user interfaces",
+    "skills": ["html", "css", "javascript", "react", "vue", "tailwind", "bootstrap"]
+  },
+  "full_stack_engineer": {
+    "career": "Full Stack Developer",
+    "category": "Backend Development",
+    "description": "Develops both frontend and backend",
+    "skills": ["python", "javascript", "react", "node.js", "sql", "git", "rest api"]
+  },
+  "devops_engineer": {
+    "career": "DevOps Engineer",
+    "category": "DevOps",
+    "description": "Manages infrastructure and CI/CD",
+    "skills": ["docker", "kubernetes", "git", "ci/cd", "linux", "bash", "nginx"]
+  },
+  "cloud_engineer": {
+    "career": "Cloud Engineer",
+    "category": "Cloud",
+    "description": "Builds and manages cloud solutions",
+    "skills": ["aws", "gcp", "azure", "lambda", "s3", "cloud functions", "terraform"]
+  }
+}

@@ -1,55 +1,270 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Results - ElevatrAI</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #111;
-      color: #eee;
-      padding: 20px;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-      background-color: #1e1e1e;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #444;
-    }
-    h1, h2 {
-      color: #40e0d0;
-    }
-    pre {
-      background-color: #222;
-      padding: 10px;
-      border-radius: 5px;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    .label {
-      font-weight: bold;
-      color: #ffa500;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>🚀 ElevatrAI Career Results</h1>
+<!--
+Career Analysis Results Template
 
-    <h2>👤 Target Role: {{ role_display_name }}</h2>
+This template displays the ML-generated career analysis results including:
+1. Career path recommendations
+2. Skill gap analysis
+3. Learning roadmap
+4. Curated resources
 
-    <p><span class="label">Mode Used:</span> {{ user_mode | capitalize }}</p>
-    <p><span class="label">Skills Extracted:</span> {{ skills }}</p>
+Data Flow:
+- Backend → ML Analysis → Template Variables → Rendered UI
 
-    <h2>📄 Resume / Skill Summary</h2>
-    <pre>{{ resume_text }}</pre>
+Template Variables:
+- transition_type: Type of career path
+- analysis: ML analysis results
+- current_role/target_role: Career roles
+- recommendations: Role suggestions (for 'recommend' path)
+- user_skills: Current skill set
 
-    <h2>📘 Personalized Learning Plan</h2>
-    <pre>{{ learning_plan }}</pre>
+Author: Anslem Akadu
+-->
 
-    <br>
-    <a href="/" style="color:#40e0d0;">⬅️ Back to Home</a>
-  </div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}ElevatrAI - Your Career Roadmap{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    <!-- Results Header -->
+    <header class="results-header">
+        <h1>Your Career Roadmap</h1>
+        <p>Here's your personalized career development plan powered by ML analysis</p>
+    </header>
+
+    <!-- Career Path Summary -->
+    <!-- Shows the type of analysis and key metrics -->
+    <section class="summary">
+        <div class="summary-content">
+            <!-- Path Type Indicator -->
+            <div class="path-info">
+                <span class="path-emoji">
+                    {% if transition_type == 'beginner' %}🌱
+                    {% elif transition_type == 'same_role' %}⬆️
+                    {% elif transition_type == 'recommend' %}🎯
+                    {% else %}🔄{% endif %}
+                </span>
+                <h2>{{ transition_type|title }} Path</h2>
+            </div>
+
+            <!-- Role Summary - Handle both recommendations and specific roles -->
+            <div class="role-summary">
+                {% if transition_type == 'recommend' %}
+                    <h3>Recommended Career Paths</h3>
+                    <p>Based on your current skills</p>
+                {% elif transition_type != 'beginner' and current_role %}
+                    <div class="role-transition">
+                        <h3>{{ current_role }} → {{ target_role }}</h3>
+                        <p class="completion-status">
+                            Current Progress: {{ analysis.completion_percentage }}% Complete
+                        </p>
+                    </div>
+                {% elif analysis.target_role %}
+                    <div class="target-role">
+                        <h3>Target Role: {{ analysis.target_role.career }}</h3>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ML-Generated Skills Analysis -->
+    <!-- This section displays the results of our skill matching algorithm -->
+    <section class="skills-section">
+        <!-- Section Header -->
+        <div class="section-header">
+            <span class="emoji" role="img" aria-label="Skills Analysis">📋</span>
+            <h3>Skills Analysis</h3>
+        </div>
+
+        <!-- Skills Comparison Grid -->
+        <!-- Shows matched vs. missing skills from our ML analysis -->
+        <div class="skills-grid">
+            <!-- Current Skills (if not a complete beginner) -->
+            {% if transition_type != 'beginner' and analysis.matched_skills %}
+            <div class="skills-column">
+                <h4>
+                    <span class="emoji" role="img" aria-label="Existing Skills">✅</span>
+                    Skills You Have
+                </h4>
+                <!-- List of skills that match the target role -->
+                <ul class="skills-list matched">
+                    {% for skill in analysis.matched_skills %}
+                    <li>
+                        {{ skill }}
+                        <!-- TODO: Add skill proficiency level indicators -->
+                        <!-- TODO: Add skill relevance scores -->
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Skills Gap Analysis -->
+            <div class="skills-column">
+                <h4>
+                    <span class="emoji" role="img" aria-label="Skills to Learn">📚</span>
+                    Skills To Learn
+                </h4>
+                <!-- List of skills needed for the target role -->
+                <ul class="skills-list missing">
+                    {% for skill in analysis.missing_skills %}
+                    <li>
+                        {{ skill }}
+                        <!-- TODO: Add difficulty ratings -->
+                        <!-- TODO: Add estimated learning time -->
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ML-Generated Learning Roadmap -->
+    <!-- This section presents our AI-curated learning path with resources -->
+    <section class="roadmap">
+        <!-- Section Header -->
+        <div class="section-header">
+            <span class="emoji" role="img" aria-label="Learning Journey">🗺️</span>
+            <h3>Your Learning Journey</h3>
+        </div>
+
+        <!-- Learning Phases -->
+        <!-- Generated by our ML pipeline based on skill requirements -->
+        {% if analysis.phases %}
+        {% for phase in analysis.phases %}
+        <div class="phase">
+            <!-- Phase Header -->
+            <h3>Phase {{ loop.index }}: {{ phase.name }}</h3>
+            <p class="phase-description">{{ phase.description }}</p>
+            
+            <!-- Skills and Resources for this Phase -->
+            <ul class="learning-list">
+                {% for skill, resources in phase.skills %}
+                <li class="learning-item">
+                    <!-- Skill Header -->
+                    <div class="skill-header">
+                        <span class="skill-name">{{ skill }}</span>
+                        <!-- TODO: Add estimated completion time -->
+                        <!-- TODO: Add prerequisites -->
+                    </div>
+                    
+                    <!-- Curated Learning Resources -->
+                    <!-- Resources are ranked by our recommendation algorithm -->
+                    <div class="resources">
+                        {% for resource in resources %}
+                        <div class="resource-item">
+                            <!-- Resource Type Icon -->
+                            <span class="emoji" role="img" aria-label="{{ resource.type }}">
+                                {% if resource.type == 'Course' %}📚
+                                {% elif resource.type == 'Documentation' %}📖
+                                {% else %}🔗{% endif %}
+                            </span>
+                            
+                            <!-- Resource Link -->
+                            <a href="{{ resource.url }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="resource-link {{ resource.level|lower }}"
+                               aria-label="{{ resource.name }} - {{ resource.type }} ({{ resource.level }})">
+                                {{ resource.name }}
+                                <span class="resource-meta">
+                                    {{ resource.type }} • {{ resource.level }}
+                                </span>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </section>
+
+    <!-- TODO: Future Enhancements
+         1. Add progress tracking
+         2. Interactive skill tree visualization
+         3. Personalized learning pace estimation
+         4. Community learning paths
+         5. Resource ratings and reviews -->
+
+    {% if transition_type == 'recommend' %}
+    <!-- ML-Powered Career Recommendations -->
+    <!-- This section shows AI-generated career matches based on skill analysis -->
+    <section class="recommendations-section">
+        <!-- Section Header -->
+        <div class="section-header">
+            <span class="emoji" role="img" aria-label="Career Recommendations">🎯</span>
+            <h3>Recommended Career Paths</h3>
+            <p class="section-description">
+                Based on ML analysis of your skills and market demand
+            </p>
+        </div>
+
+        <!-- Recommendation Cards Grid -->
+        <!-- Each card shows a career match from our ML model -->
+        <div class="recommendations-grid">
+            {% for role in recommendations %}
+            <div class="recommendation-card">
+                <!-- Role Information -->
+                <div class="recommendation-header">
+                    <h4>{{ role.career }}</h4>
+                    <!-- ML Confidence Score -->
+                    <p class="match-score" title="ML confidence score based on skill matching">
+                        {{ role.completion_percentage }}% Match
+                    </p>
+                </div>
+                
+                <!-- Skill Match Analysis -->
+                <div class="skills-analysis">
+                    <!-- Matching Skills from ML Analysis -->
+                    <div class="matched-skills">
+                        <h5>
+                            <span class="emoji" role="img" aria-label="Matching Skills">✅</span>
+                            Skills You Have
+                        </h5>
+                        <ul class="skills-list matched">
+                            {% for skill in role.matched_skills %}
+                            <li>
+                                {{ skill }}
+                                <!-- TODO: Add skill relevance scores -->
+                                <!-- TODO: Add market demand indicators -->
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Role Selection Form -->
+                <!-- Allows users to get detailed analysis for this role -->
+                <form action="{{ url_for('main_routes.select_role') }}" 
+                      method="post" 
+                      class="role-selection-form">
+                    <!-- Hidden inputs for backend processing -->
+                    <input type="hidden" name="role_slug" value="{{ role.role_slug }}">
+                    <input type="hidden" name="skills" value="{{ user_skills|join(',') }}">
+                    <input type="hidden" name="transition_type" value="selected_role">
+                    
+                    <!-- Action Button -->
+                    <button type="submit" 
+                            class="select-role-btn"
+                            aria-label="Get detailed career path for {{ role.career }}">
+                        Choose This Path
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- TODO: Future Enhancements
+             1. Add salary ranges and market demand
+             2. Show similar alternative roles
+             3. Add company/job listings
+             4. Show success stories
+             5. Add skill importance weights -->
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

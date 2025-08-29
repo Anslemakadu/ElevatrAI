@@ -1,38 +1,50 @@
-# === Python-related ===
+# ===========================
+# ElevatrAI .gitignore
+# Purpose: Prevent sensitive, system, build, and unnecessary files from being tracked in git.
+# ===========================
+
+# --- Python Bytecode & Cache ---
 __pycache__/
-__pycache__
-*.py[cod]
+*.py[cod]        # Compiled Python files
 *.pyo
 *.pyd
-*.so
+*.so             # Compiled extensions
+.pytest_cache/   # pytest cache
 
-# === Virtual Environment ===
-venv/
+# --- Virtual Environments ---
+venv/            # Local Python virtual environment
 
-# === Environment Variables ===
-.env
-.env.*
+# --- Environment Variables & Secrets ---
+.env             # Main environment config (contains secrets)
+.env.*           # Variant env files (e.g., .env.production)
 
-# === Log, Cache, and Build Files ===
-*.log
-*.bak
-*.swp
-.cache/
-.pytest_cache/
-*.db
-*.sqlite3
+# --- Logs, Backups, Databases ---
+*.log            # Log files
+*.bak            # Backup files
 
-# === Editor Configs ===
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
+# --- Cache ---
+.cache/          # General cache folder
+*.egg-info/      # Python package metadata
 
-# === System Files ===
-.DS_Store
-Thumbs.db
+# --- Editor & IDE Configs ---
+.vscode/         # VS Code settings
+.idea/           # JetBrains IDE settings
 
-# === ignore llm_server ===
-app/llm_server
+# --- Jupyter Notebooks ---
+.ipynb_checkpoints/  # Notebook checkpoints
+
+
+# --- Ignore test outputs ---
+htmlcov/         # Coverage reports
+coverage.xml     # Coverage XML report
+
+# --- Ignore OS-specific files ---
+*.~              # Backup files (Emacs, etc.)
+
+# --- Ignore Python wheels ---
+*.whl            # Built wheel files
+
+
+# --- End of .gitignore ---
 
 

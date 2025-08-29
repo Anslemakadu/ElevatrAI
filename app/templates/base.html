@@ -1,0 +1,78 @@
+<!--
+ElevatrAI Base Template
+
+This is the master template that defines the basic HTML structure and common elements
+used across all pages. It implements:
+
+1. Responsive meta tags and SEO basics
+2. CSS loading and extension points
+3. Common layout structure
+4. Flash message handling
+5. Loading states and toasts
+
+Template Blocks:
+- title: Page-specific title
+- extra_css: Additional CSS files
+- header: Page-specific header content
+- content: Main page content
+
+Author: Anslem Akadu
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Essential Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered career development and skill gap analysis">
+    <meta name="author" content="Anslem Akadu">
+    
+    <!-- Dynamic Title Block -->
+    <title>{% block title %}ElevatrAI{% endblock %}</title>
+    
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- Extension Point for Additional CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Site Header -->
+        <header>
+            <h1>ElevatrAI</h1>
+            {% block header %}{% endblock %}
+        </header>
+        
+        <!-- Main Content Area -->
+        <main>
+            <!-- Flash Messages Block -->
+            {% block flash_messages %}
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            {% endblock %}
+            
+            <!-- Dynamic Content Block - ONLY ONE CONTENT BLOCK -->
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Site Footer -->
+        <footer>
+            <small>
+                Made with Python + ML | 
+                <a href="{{ url_for('main_routes.home') }}" aria-label="Start Over">
+                    Start Over
+                </a>
+            </small>
+        </footer>
+    </div>
+</body>
+</html>

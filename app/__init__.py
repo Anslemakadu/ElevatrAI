@@ -1,37 +1,60 @@
-from flask import Flask
-import logging
+"""
+ElevatrAI - Career Development and Skill Analysis Platform
 
-try:
-    from flask_cors import CORS
-except ImportError:
-    raise ImportError("flask-cors not found. Please install with: pip install flask-cors")
+This module implements the application factory pattern for Flask, providing a clean
+and modular way to create the application instance. It handles all core initialization
+including configuration loading, blueprint registration, and security settings.
+
+Key Components:
+- Flask application factory
+- Security configurations
+- Blueprint registration
+- File upload limits
+
+The factory pattern allows for:
+- Multiple instances of the app (e.g., testing)
+- Dynamic configuration
+- Easier unit testing
+- Blueprint-based modularization
+
+Author: Anslem Akadu
+"""
+import os
+from flask import Flask
 
 def create_app():
+    """
+    Create and configure a Flask application instance using the factory pattern.
+    
+    This factory function encapsulates all the initialization logic for the ElevatrAI
+    platform, including security settings, blueprints, and upload configurations.
+    
+    Returns:
+        Flask: A configured Flask application instance ready to serve requests
+        
+    Example:
+        To create an application instance:
+        >>> from app import create_app
+        >>> app = create_app()
+        >>> app.run()
+    """
     app = Flask(__name__)
     
-    # Configure CORS
-    CORS(app, resources={
-        r"/*": {
-            "origins": "*",
-            "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type"]
-        }
-    })
-
-    # Configure logging
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-
-    # Initialize components
-    from app.nlp_utils import load_skills
-    from app.recommender import get_skill_gap, recommend_roles
-
-    # Register blueprints
+    # Security Configuration
+    # In production, SECRET_KEY must be set as an environment variable
+    app.secret_key = os.getenv('SECRET_KEY', 'dev-key-change-in-prod')
+    
+    # File Upload Configuration
+    # Limit upload size to 16MB to prevent memory issues
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+    
+    # Register route blueprints
+    # Blueprints help organize routes into logical modules
     from app.routes import main_routes
     app.register_blueprint(main_routes)
-
+    
+    # TODO: Add error handlers for common HTTP errors (404, 500)
+    # TODO: Add logging configuration for production
+    # TODO: Add monitoring/metrics endpoints
+    
     return app
-
-

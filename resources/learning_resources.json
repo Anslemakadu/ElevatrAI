@@ -1,0 +1,206 @@
+{
+  "python": [
+    {
+      "name": "Python for Beginners",
+      "url": "https://docs.python.org/3/tutorial/",
+      "type": "Documentation",
+      "level": "Beginner"
+    },
+    {
+      "name": "Python Crash Course (freeCodeCamp)",
+      "url": "https://www.freecodecamp.org/learn/scientific-computing-with-python/",
+      "type": "Course",
+      "level": "Beginner"
+    }
+  ],
+  "machine learning": [
+    {
+      "name": "Machine Learning Crash Course",
+      "url": "https://developers.google.com/machine-learning/crash-course",
+      "type": "Course",
+      "level": "Intermediate"
+    },
+    {
+      "name": "Fast.ai Practical Deep Learning",
+      "url": "https://course.fast.ai/",
+      "type": "Course",
+      "level": "Intermediate"
+    }
+  ],
+  "pandas": [
+    {
+      "name": "Pandas Tutorial for Beginners",
+      "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/",
+      "type": "Tutorial",
+      "level": "Beginner"
+    },
+    {
+      "name": "Data Analysis with Pandas",
+      "url": "https://www.kaggle.com/learn/pandas",
+      "type": "Course",
+      "level": "Beginner"
+    }
+  ],
+  "pytorch": [
+    {
+      "name": "PyTorch Fundamentals",
+      "url": "https://pytorch.org/tutorials/beginner/basics/intro.html",
+      "type": "Tutorial",
+      "level": "Intermediate"
+    },
+    {
+      "name": "Deep Learning with PyTorch",
+      "url": "https://www.fast.ai/",
+      "type": "Course",
+      "level": "Advanced"
+    }
+  ],
+  "tensorflow": [
+    {
+      "name": "TensorFlow Basics",
+      "url": "https://www.tensorflow.org/tutorials/quickstart/beginner",
+      "type": "Tutorial",
+      "level": "Beginner"
+    },
+    {
+      "name": "TensorFlow in Practice",
+      "url": "https://www.coursera.org/professional-certificates/tensorflow-in-practice",
+      "type": "Course",
+      "level": "Intermediate"
+    }
+  ],
+  "html": [
+    {
+      "name": "MDN HTML Guide",
+      "url": "https://developer.mozilla.org/en-US/docs/Learn/HTML",
+      "type": "Documentation",
+      "level": "Beginner"
+    },
+    {
+      "name": "Responsive Web Design",
+      "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+      "type": "Course",
+      "level": "Beginner"
+    }
+  ],
+  "css": [
+    {
+      "name": "MDN CSS Guide",
+      "url": "https://developer.mozilla.org/en-US/docs/Learn/CSS",
+      "type": "Documentation",
+      "level": "Beginner"
+    },
+    {
+      "name": "CSS Zero to Hero",
+      "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/#learn-css-by-building-a-cafe-menu",
+      "type": "Course",
+      "level": "Beginner"
+    }
+  ],
+  "javascript": [
+    {
+      "name": "JavaScript.info",
+      "url": "https://javascript.info/",
+      "type": "Tutorial",
+      "level": "Beginner"
+    },
+    {
+      "name": "MDN JavaScript Guide",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
+      "type": "Documentation",
+      "level": "Intermediate"
+    }
+  ],
+  "react": [
+    {
+      "name": "React Official Tutorial",
+      "url": "https://react.dev/learn",
+      "type": "Documentation",
+      "level": "Beginner"
+    },
+    {
+      "name": "Full Modern React Course",
+      "url": "https://www.freecodecamp.org/learn/front-end-development-libraries/#react",
+      "type": "Course",
+      "level": "Intermediate"
+    }
+  ],
+  "sql": [
+    {
+      "name": "SQL for Beginners",
+      "url": "https://www.sqlcourse.com/",
+      "type": "Tutorial",
+      "level": "Beginner"
+    },
+    {
+      "name": "Advanced SQL",
+      "url": "https://www.kaggle.com/learn/advanced-sql",
+      "type": "Course",
+      "level": "Advanced"
+    }
+  ],
+  "postgresql": [
+    {
+      "name": "PostgreSQL Tutorial",
+      "url": "https://www.postgresqltutorial.com/",
+      "type": "Tutorial",
+      "level": "Beginner"
+    }
+  ],
+  "rest api": [
+    {
+      "name": "REST API Design",
+      "url": "https://restfulapi.net/",
+      "type": "Documentation",
+      "level": "Intermediate"
+    }
+  ],
+  "flask": [
+    {
+      "name": "Flask Tutorial",
+      "url": "https://flask.palletsprojects.com/en/2.3.x/tutorial/",
+      "type": "Documentation",
+      "level": "Beginner"
+    }
+  ],
+  "django": [
+    {
+      "name": "Django Tutorial",
+      "url": "https://docs.djangoproject.com/en/4.2/intro/tutorial01/",
+      "type": "Documentation",
+      "level": "Beginner"
+    }
+  ],
+  "git": [
+    {
+      "name": "Git Basics",
+      "url": "https://git-scm.com/book/en/v2/Getting-Started-Git-Basics",
+      "type": "Documentation",
+      "level": "Beginner"
+    }
+  ],
+  "docker": [
+    {
+      "name": "Docker Getting Started",
+      "url": "https://docs.docker.com/get-started/",
+      "type": "Documentation",
+      "level": "Beginner"
+    }
+  ],
+  "aws": [
+    {
+      "name": "AWS Cloud Practitioner",
+      "url": "https://aws.amazon.com/training/digital/aws-cloud-practitioner-essentials/",
+      "type": "Course",
+      "level": "Beginner"
+    }
+  ],
+  "linux": [
+    {
+      "name": "Linux Command Line Basics",
+      "url": "https://linuxjourney.com/",
+      "type": "Tutorial",
+      "level": "Beginner"
+    }
+  ]
+}

@@ -1,225 +1,399 @@
-from flask import Blueprint, render_template, request, jsonify
-from app.nlp_utils import extract_skills_from_text, clean_manual_input
-from app.llm import query_llm
-from app.recommender import recommend_roles, get_skill_gap
-from PyPDF2 import PdfReader
+"""
+ElevatrAI Web Application Routes
+
+This module implements the web application's API endpoints and request handling logic,
+serving as the integration layer between the frontend UI and our ML-powered backend.
+It orchestrates the flow of data through the system:
+
+Frontend → Routes → ML Analysis → Results → Frontend
+
+Key Components:
+1. Request Handling: Process form submissions and file uploads
+2. Input Validation: Ensure data quality and security
+3. ML Pipeline Integration: Connect to our skill analysis engine
+4. Response Formation: Structure data for frontend templates
+
+Data Flow:
+1. User submits skills/resume → validate input
+2. Parse and extract skills → normalize data
+3. Run ML analysis → get recommendations
+4. Format results → render appropriate template
+
+Author: Anslem Akadu
+"""
+
 import json
-import logging
-import os
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from app.parser import parse_user_input
+from app.recommender import (
+    analyze_career_transition,
+    recommend_roles,
+    generate_recommendations,
+    load_learning_resources,
+    roles_data
+)
+from app.file_utils import process_resume_upload
 
-logger = logging.getLogger(__name__)
+# Create a Flask Blueprint for our routes
+# This allows for modular application structure and easier testing
+main_routes = Blueprint("main_routes", __name__)
 
-# Import local modules
-from app.llm import generate_learning_plan, query_llm
-from app.recommender import recommend_roles, get_skill_gap
-from app.parser import parse_manual_input, parse_resume_text
-from app.llm_prompt_builder import build_prompt_step1, build_prompt_step2, build_prompt_step3
+# Load role definitions at module level for better performance
+# This prevents reloading the data on every request
+try:
+    with open("resources/roles.json") as f:
+        ROLES_DATA = json.load(f)
+        AVAILABLE_ROLES = list(ROLES_DATA.keys())
+except Exception as e:
+    print(f"Error loading roles data: {e}")
+    ROLES_DATA = {}
+    AVAILABLE_ROLES = []
 
+# TODO: Add role data validation and error handling
+# TODO: Implement role data caching with TTL
+# TODO: Add API versioning for future compatibility
 
-main_routes = Blueprint("main", __name__)
+def allowed_file(filename: str) -> bool:
+    """
+    Validate file types for secure resume uploads.
+    
+    This security function ensures that only allowed file types can be processed,
+    preventing potential security vulnerabilities from malicious file uploads.
+    
+    Args:
+        filename: Name of the uploaded file
+        
+    Returns:
+        bool: True if file extension is allowed, False otherwise
+        
+    Example:
+        >>> allowed_file('resume.pdf')
+        True
+        >>> allowed_file('script.js')
+        False
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf', 'doc', 'docx'}
 
-@main_routes.route('/', methods=['GET'])
+@main_routes.route('/')
 def home():
-    return render_template("home.html")
+    """
+    Render the application's home page.
+    
+    This route:
+    1. Loads available career roles from our dataset
+    2. Passes them to the template for dynamic role selection
+    3. Renders the main UI where users start their career analysis
+    
+    Returns:
+        Rendered index.html template with:
+        - List of available career roles
+        - Dynamic form fields
+        - File upload options
+    """
+    return render_template("index.html", roles=AVAILABLE_ROLES)
+
+@main_routes.route('/select-role', methods=['POST'])
+def select_role():
+    """
+    Handle role selection and generate personalized learning journey.
+    
+    This endpoint processes role selections from the recommendations page:
+    1. Validates the selected role and user's current skills
+    2. Generates a career transition analysis
+    3. Creates a phased learning plan with resources
+    
+    Request Parameters:
+        role_slug (str): Identifier for the selected role
+        skills_str (str): Comma-separated list of user's current skills
+        
+    Returns:
+        Rendered results.html template with:
+        - Career transition analysis
+        - Phased learning plan
+        - Curated learning resources
+        
+    Error Handling:
+        - Invalid role selection → Redirect to home with error message
+        - Missing skills → Redirect to home with error message
+        - Analysis errors → Redirect to home with error details
+    """
+    role_slug = request.form.get('role_slug')
+    skills_str = request.form.get('skills')
+    
+    if not role_slug or not skills_str:
+        flash('Invalid role selection.', 'error')
+        return redirect(url_for('main_routes.home'))
+    
+    try:
+        user_skills = [s.strip() for s in skills_str.split(',')]
+        
+        # Get career transition analysis
+        analysis = analyze_career_transition(
+            user_skills=user_skills,
+            current_role_slug=None,
+            target_role_slug=role_slug,
+            transition_type='upskill'
+        )
+        
+        phases = generate_recommendations(analysis)
+        
+        return render_template(
+            'results.html',
+            transition_type='selected_role',
+            analysis=analysis,
+            phases=phases,
+            user_skills=user_skills,
+            selected_role=roles_data[role_slug]
+        )
+        
+    except Exception as e:
+        flash(f'Error analyzing role: {str(e)}', 'error')
+        return redirect(url_for('main_routes.home'))
 
 @main_routes.route('/skill-gap', methods=['POST'])
-def skill_gap():
-    try:
-        skills = []
-        career = None
-        from_scratch = False
-
-        content_type = request.content_type or ""
-
-        # CASE 1: PDF Resume Upload (multipart/form-data)
-        if content_type.startswith('multipart/form-data'):
-            logger.debug("Processing multipart/form-data request")
-
-            # Validate file exists
-            if 'resume' not in request.files:
-                return jsonify({"error": "No resume file uploaded"}), 400
-
-            pdf_file = request.files['resume']
-            if pdf_file.filename == '':
-                return jsonify({"error": "Empty filename for uploaded resume"}), 400
-
-            # Read PDF
-            reader = PdfReader(pdf_file)
-            text = ""
-            for page in reader.pages:
-                text += page.extract_text() or ""
-
-            logger.debug(f"Extracted text length from PDF: {len(text)} characters")
-
-            # Extract skills
-            skills = extract_skills_from_text(text)
-
-            # Get career path from form data
-            career = request.form.get('career_path', '').strip()
-            from_scratch = request.form.get('from_scratch', 'false').lower() == 'true'
-
-        # CASE 2: JSON input (manual or text mode)
-        elif content_type.startswith('application/json'):
-            try:
-                data = request.get_json()
-            except Exception as e:
-                logger.error(f"JSON parsing failed: {e}")
-                return jsonify({"error": "Invalid JSON format", "details": str(e)}), 400
-
-            if not data or not data.get('career_path'):
-                return jsonify({"error": "career_path is required"}), 400
-
-            skills_raw = data.get('skills', '')
-            career = data.get('career_path')
-            input_mode = data.get('input_mode', 'manual')
-            from_scratch = data.get('from_scratch', False)
-
-            if from_scratch:
-                skills = []
-            else:
-                skills = clean_manual_input(skills_raw) if input_mode == 'manual' else extract_skills_from_text(skills_raw)
-
-        else:
-            return jsonify({"error": "Unsupported Content-Type"}), 400
-
-        # === KEEP EXISTING LLM + gap analysis code ===
-        if not from_scratch and not skills:
-            return jsonify({"error": "No valid skills detected"}), 400
-
-        gap_analysis = get_skill_gap(skills, career)
-        if not gap_analysis or "error" in gap_analysis:
-            return jsonify({"error": "Failed to generate skill gap analysis"}), 400
-
-        context = {
-            "target_role": gap_analysis["career"],
-            "known_skills": gap_analysis["matched_skills"],
-            "learn_skills": gap_analysis["missing_skills"],
-            "full_skillset": gap_analysis["skills"],
-            "resources": gap_analysis["resources"],
-            "backend_summary": None
-        }
-
-        prompt = build_prompt_step1(context, "", len(context["known_skills"]) == 0)
-        llm_response = query_llm(context, prompt)
-
+def analyze_skills():
+    """
+    Main Analysis Endpoint: Process career analysis requests and generate recommendations.
+    
+    This is the core endpoint of our application that:
+    1. Handles multiple analysis paths:
+       - Role recommendations based on skills
+       - Complete beginner roadmap
+       - Upskilling in current role
+       - Career transition analysis
+       
+    2. Processes input from various sources:
+       - Manual skill entry
+       - Resume uploads (PDF/DOCX)
+       - Current/target role selections
+       
+    3. Generates personalized results:
+       - Skill gap analysis
+       - Learning recommendations
+       - Career transition roadmap
+       
+    Request Parameters:
+        path: Analysis type ('recommend', 'beginner', 'upskill', 'switch')
+        current_role: User's current role (optional)
+        target_role: Desired career role
+        skills_text: Manually entered skills
+        raw_skills: Skills from other sources
+        resume: File upload (optional)
+        
+    Returns:
+        Rendered results.html with personalized analysis
+        
+    Error Handling:
+        - Invalid input → Flash message + redirect
+        - Missing required data → Flash message + redirect
+        - Processing errors → Flash message + redirect
+        
+    Security:
+        - File type validation
+        - Input sanitization
+        - Error message sanitization
+    """
+    # Extract and validate form data
+    path = request.form.get('path')
+    current_role = request.form.get('current_role', '').strip()
+    target_role = request.form.get('target_role', '').strip()
+    skills_text = request.form.get('skills', '').strip()
+    raw_skills = request.form.get('raw_skills', '').strip()
+    
+    # Handle different analysis paths based on user's request
+    if path == 'recommend':
+        # Path: Role Recommendations
+        # This path uses ML to suggest roles based on user's current skills
+        transition_type = 'recommend'
+        
+        # Validate input: require either manual skills or resume
+        if not skills_text and not raw_skills and 'resume' not in request.files:
+            flash('Please provide your skills either by pasting them or uploading a resume.', 'error')
+            return redirect(url_for('main_routes.home'))
+            
         try:
-            analysis = json.loads(llm_response) if isinstance(llm_response, str) else llm_response
-        except json.JSONDecodeError:
-            analysis = {
-                "missing_skills": context["learn_skills"],
-                "learning_path": [{"skill": skill, "estimated_weeks": 4, "prerequisites": []} for skill in context["learn_skills"]],
-                "recommendations": ["Focus on fundamentals first"]
-            }
-
-        return jsonify({
-            "gap_analysis": gap_analysis,
-            "llm_analysis": analysis,
-            "next_steps": {
-                "immediate_focus": context["learn_skills"][:2],
-                "resources": dict(list(context["resources"].items())[:3])
-            }
-        })
-
-    except Exception as e:
-        logger.error(f"Error in skill-gap route: {str(e)}", exc_info=True)
-        return jsonify({"error": "Failed to process skill gap analysis", "details": str(e)}), 500
-
-@main_routes.route('/starter-resources', methods=['POST'])
-def starter_resources():
-    body = request.get_json(force=True)
-    skill = body.get('skill') or (body.get('context') or {}).get('missing_skills', [None])[0]
+            # Step 1: Extract and normalize skills
+            # We don't need role information for pure recommendations
+            parsed = parse_user_input(
+                target_role=None,  # Not needed for recommendations
+                current_role=None, # Not needed for recommendations
+                skills=skills_text,
+                resume_text=None,  # Resume processing handled separately
+                transition_type='recommend'
+            )
+            
+            # Handle parsing errors
+            if parsed.get('error'):
+                flash(parsed['error'], 'error')
+                return redirect(url_for('main_routes.home'))
+                
+            # Step 2: Generate Role Recommendations
+            # This uses our ML model to match skills with potential roles
+            analysis = recommend_roles(parsed.get('skills', []))
+            
+            # Step 3: Sort and filter recommendations
+            # We show only top 3 roles sorted by match score
+            if 'recommendations' in analysis:
+                analysis['recommendations'] = sorted(
+                    analysis['recommendations'],
+                    key=lambda x: x['score'],  # Sort by ML confidence score
+                    reverse=True
+                )[:3]  # Limit to top 3 matches
+            
+            return render_template(
+                'results.html',
+                transition_type='recommend',
+                analysis=analysis,
+                recommendations=analysis.get('recommendations', []),
+                user_skills=parsed.get('skills', [])
+            )
+        except Exception as e:
+            flash(f'Error generating recommendations: {str(e)}', 'error')
+            return redirect(url_for('main_routes.home'))
     
-    # Load real resources from file
-    resources_path = os.path.join(os.path.dirname(__file__), '../resources/skills/learning_resources.json')
-    with open(resources_path, 'r') as f:
-        all_resources = json.load(f)
+    # Handle Beginner Path
+    # This path creates a complete learning roadmap for beginners
+    elif path == 'beginner':
+        transition_type = 'beginner'
+        if not target_role or target_role not in AVAILABLE_ROLES:
+            flash('Please select your target role for the beginner path.', 'error')
+            return redirect(url_for('main_routes.home'))
+            
+    # Handle Beginner With Some Skills Path
+    # Similar to beginner but takes existing skills into account
+    elif path == 'beginner_with_skills':
+        transition_type = 'beginner'
+        # Validate target role selection
+        if not target_role or target_role not in AVAILABLE_ROLES:
+            flash('Please select your target role for the beginner path.', 'error')
+            return redirect(url_for('main_routes.home'))
+        # Validate skill input
+        if not skills_text and not raw_skills:
+            flash('Please provide some skills you have, either by pasting or uploading a resume.', 'error')
+            return redirect(url_for('main_routes.home'))
+        current_role = None  # No current role for beginners with skills
     
-    # Normalize skill name for lookup
-    skill_key = skill.lower() if skill else None
-    resources = all_resources.get(skill_key, {})
-    
-    # If no resources found, return a default message
-    if not resources:
-        return jsonify({"resources": [{"title": "No curated resources found for this skill.", "url": "", "description": ""}]})
-    
-    # Format resources for frontend
-    formatted = []
-    for typ, val in resources.items():
-        formatted.append({
-            "title": f"{skill.title()} {typ.title()}",
-            "url": val,
-            "description": f"{typ.title()} resource for {skill.title()}"
-        })
-    
-    return jsonify({"resources": formatted})
-
-@main_routes.route('/roadmap', methods=['POST'])
-def roadmap():
-    body = request.get_json(force=True)
-    analysis = body.get('analysis', {})
-    resources = body.get('resources', [])
-    context = body.get('context', {})
-
-    try:
-        # Step 2: roadmap generation
-        p2 = build_prompt_step2(analysis, from_scratch=(not context.get('known_skills')))
-        out2 = query_llm(context, p2)
-        roadmap_json = json.loads(out2)
-    except Exception:
-        roadmap_json = [
-            {"title": "Foundations", "weeks": 4, "outcomes": ["Python & Math basics"], "project": "Small data project"},
-            {"title": "Modeling", "weeks": 6, "outcomes": ["Train & eval models"], "project": "Train a NN"}
-        ]
-
-    # Step 3: motivational message
-    final_prompt = build_prompt_step3(roadmap_json)
-    final_message = query_llm(context, final_prompt)
-
-    return jsonify({"roadmap": roadmap_json, "final_message": final_message})
-
-@main_routes.route('/recommend', methods=['POST'])
-def recommend():
-    try:
-        data = request.get_json(force=True)
-        skills_raw = data.get('skills', '')
+    # Handle Upskilling Path
+    # This path focuses on advancing within the current role
+    elif path == 'upskill':
+        transition_type = 'same_role'
+        # Validate current role
+        if not current_role or current_role not in AVAILABLE_ROLES:
+            flash('Please select your current role for upskilling.', 'error')
+            return redirect(url_for('main_routes.home'))
+        # For upskilling, target is same as current role
+        target_role = current_role
         
-        # Clean and extract skills
-        if data.get('input_mode') == 'resume':
-            skills = extract_skills_from_text(skills_raw)
-        else:
-            skills = clean_manual_input(skills_raw)
-            
-        # Get role recommendations
-        recommendations = recommend_roles(skills, top_k=3)
-        
-        # Enhance with LLM insights for each recommendation
-        for rec in recommendations:
-            context = {
-                "target_role": rec["career"],
-                "known_skills": rec["matched_skills"],
-                "learn_skills": rec["missing_skills"],
-                "full_skillset": skills,
-                "resources": rec["resources"]
-            }
-            
-            prompt = f"""
-            Given someone with skills in {', '.join(context['known_skills'])},
-            provide a brief career transition plan to become a {context['target_role']}.
-            Focus on immediate next steps and timeline.
-            """
-            
+    # Handle Career Switch Path
+    # This path analyzes transitions between different roles
+    else:  # switch
+        transition_type = 'upskill'
+        # Validate both current and target roles
+        if not current_role or not target_role or current_role not in AVAILABLE_ROLES or target_role not in AVAILABLE_ROLES:
+            flash('Please select both your current and target roles for the career switch.', 'error')
+            return redirect(url_for('main_routes.home'))
+        # Prevent incorrect path usage
+        if current_role == target_role:
+            flash('For same role progression, please use the "Level Up Current Role" option instead.', 'error')
+            return redirect(url_for('main_routes.home'))
+    
+    # Resume Processing Section
+    # Handle file uploads and extract text content
+    resume_text = None
+    if 'resume' in request.files:
+        file = request.files['resume']
+        if file and file.filename and allowed_file(file.filename):
             try:
-                llm_insight = query_llm(context, prompt)
-                rec["ai_insights"] = llm_insight
+                # Extract text from resume using our NLP pipeline
+                resume_text = process_resume_upload(file)
             except Exception as e:
-                logger.error(f"LLM insight failed for {rec['career']}: {e}")
-                rec["ai_insights"] = "Unable to generate AI insights at this time."
+                # Provide user-friendly error message while logging details
+                print(f"Resume processing error: {str(e)}")  # For debugging
+                flash('Could not read file. Please upload PDF/DOCX or paste skills.', 'error')
+                return redirect(url_for('main_routes.home'))
 
-        return jsonify({"recommendations": recommendations})
+    # Skill Analysis Pipeline
+    try:
+        # For recommendation path: Focus on skill matching
+        if path == 'recommend':
+            # Extract and analyze skills without role context
+            parsed = parse_user_input(
+                target_role=None,     # No target role needed
+                current_role=None,     # No current role needed
+                skills=skills_text,    # Manual skill input
+                resume_text=resume_text,# Extracted resume text
+                transition_type='recommend'
+            )
+            
+            if parsed.get('error'):
+                flash(parsed['error'], 'error')
+                return redirect(url_for('main_routes.home'))
+                
+            # Get top 3 role recommendations
+            recommendations = recommend_roles(parsed.get('skills', []))
+            return render_template(
+                'results.html',
+                transition_type='recommend',
+                recommendations=recommendations,
+                user_skills=parsed.get('skills', [])
+            )
+        
+        # For other paths, continue with normal flow
+        parsed = parse_user_input(
+            target_role=target_role,
+            current_role=current_role,
+            skills=skills_text,
+            resume_text=resume_text,
+            transition_type=transition_type
+        )
+        
+        if parsed.get('error'):
+            flash(parsed['error'], 'error')
+            return redirect(url_for('main_routes.home'))
+            
+        # Analyze career transition
+        analysis = analyze_career_transition(
+            user_skills=parsed.get('skills', []),
+            current_role_slug=current_role,
+            target_role_slug=target_role,
+            transition_type=transition_type
+        )
+        
+        # Log analysis results for monitoring and debugging
+        # TODO: Replace with proper logging system
+        print("Analysis result:", analysis)
+        print("Skills found:", analysis.get('matched_skills'))
+        print("Missing skills:", analysis.get('missing_skills'))
+        print("Resources:", analysis.get('learning_resources'))
+        
+        # Cache analysis results in session
+        # TODO: Move to Redis/proper caching system for scalability
+        session['analysis'] = analysis
+        
+        # Return results to frontend
+        return render_template('results.html', 
+            analysis=analysis,          # ML analysis results
+            transition_type=transition_type,  # Path type
+            current_role=current_role,  # Starting point
+            target_role=target_role     # Career goal
+        )
         
     except Exception as e:
-        logger.error(f"Error in recommend route: {str(e)}", exc_info=True)
-        return jsonify({
-            "error": "Failed to generate recommendations",
-            "details": str(e)
-        }), 500
+        # Log the error for debugging
+        # TODO: Add proper error logging and monitoring
+        print(f"Error in skill analysis: {str(e)}")
+        
+        # Show user-friendly error message
+        flash("An error occurred while analyzing your career path. Please try again.", 'error')
+        return redirect(url_for('main_routes.home'))
+
+# TODO: Add the following improvements:
+# 1. API Documentation using Swagger/OpenAPI
+# 2. Rate limiting for API endpoints
+# 3. Caching layer for frequent requests
+# 4. Async processing for long-running analyses
+# 5. Better error handling and validation
+# 6. Monitoring and analytics
+# 7. A/B testing framework for ML model improvements
+
+

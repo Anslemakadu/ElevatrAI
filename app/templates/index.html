@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}ElevatrAI - Your AI Career Guide{% endblock %}
+
+{% block flash_messages %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message {{ category }}">
+                {% if category == 'error' %}❌{% else %}✨{% endif %} {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>ElevatrAI Career Wizard</h1>
+    <p class="intro-text">
+        Let AI guide your career journey. Choose your path, and I'll create a personalized
+        learning roadmap with curated resources.
+    </p>
+
+    <form method="post" action="/skill-gap" enctype="multipart/form-data">
+        <!-- Step 1: Path Selection -->
+        <div class="form-section">
+            <h2>1. Choose Your Path</h2>
+            <div class="radio-group">
+                <label class="path-option">
+                    <input type="radio" name="path" value="recommend" required>
+                    <div class="path-content">
+                        <span class="emoji">🎯</span>
+                        <div class="path-details">
+                            <strong>Find Your Path</strong>
+                            <span>Get role recommendations based on your skills</span>
+                        </div>
+                    </div>
+                </label>
+                <label class="path-option">
+                    <input type="radio" name="path" value="beginner">
+                    <div class="path-content">
+                        <span class="emoji">🌱</span>
+                        <div class="path-details">
+                            <strong>Complete Beginner</strong>
+                            <span>Start your tech journey from scratch</span>
+                        </div>
+                    </div>
+                </label>
+                <label class="path-option">
+                    <input type="radio" name="path" value="upskill">
+                    <div class="path-content">
+                        <span class="emoji">⬆️</span>
+                        <div class="path-details">
+                            <strong>Level Up Current Role</strong>
+                            <span>Enhance your existing skills</span>
+                        </div>
+                    </div>
+                </label>
+                <label class="path-option">
+                    <input type="radio" name="path" value="switch">
+                    <div class="path-content">
+                        <span class="emoji">🔄</span>
+                        <div class="path-details">
+                            <strong>Career Switch</strong>
+                            <span>Transition to a new role</span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Step 2: Dynamic Section (Role/Skills) -->
+        <div class="form-section" id="dynamicSection">
+            <h2>2. Select Your Path to Begin 🎯</h2>
+
+            <!-- Role Selection Grid -->
+            <div class="role-grid">
+                <div id="currentRoleSection" style="display:none;">
+                    <label for="current_role">Current Role</label>
+                    <select name="current_role" id="current_role" class="role-select">
+                        <option value="">Select your current role...</option>
+                        {% for role in roles %}
+                        <option value="{{ role }}">{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="targetRoleSection" style="display:none;">
+                    <label for="target_role">Target Role</label>
+                    <select name="target_role" id="target_role" class="role-select">
+                        <option value="">Select your dream role...</option>
+                        {% for role in roles %}
+                        <option value="{{ role }}">{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Skills Input Section -->
+            <div class="skills-input" style="display:none;">
+                <div class="textarea-wrapper">
+                    <label for="skills">Your Current Skills</label>
+                    <textarea 
+                        name="skills" 
+                        id="skills" 
+                        rows="3" 
+                        placeholder="e.g., Python, SQL, Data Analysis, Project Management..."
+                    ></textarea>
+                    <small class="helper-text">Separate skills with commas</small>
+                </div>
+                
+                <div class="file-upload" style="display:none;">
+                    <label for="resume" class="upload-label">
+                        <span class="upload-icon">📄</span>
+                        Upload Resume (optional)
+                    </label>
+                    <input 
+                        type="file" 
+                        name="resume" 
+                        id="resume" 
+                        accept=".pdf,.doc,.docx"
+                        class="file-input"
+                    >
+                    <small class="helper-text">PDF, DOC, or DOCX format</small>
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="generateButtons" class="action-buttons">
+            <!-- Main button for most paths -->
+            <button type="submit" class="button primary" id="mainButton" style="display:none">
+                ✨ Generate My Career Roadmap
+            </button>
+            
+            <!-- Special button for role recommendations -->
+            <button type="submit" class="button recommend" id="recommendButton" style="display:none">
+                🎯 Generate Role Recommendations
+            </button>
+            
+            <!-- Helper text for initial state -->
+            <div class="helper-message" style="text-align: center; margin-top: 1rem; color: var(--text-secondary);">
+                👆 Choose a path above to continue
+            </div>
+        </div>
+        
+        <!-- Improved helper text to guide users -->
+        <div class="form-helper" style="text-align: center; margin-top: 1rem;">
+            <small>
+                Need help? Each path is tailored to your situation:
+                <br>
+                🎯 Find Your Path: Best if you know your skills but unsure about roles
+                <br>
+                🌱 Complete Beginner: Perfect for starting your tech journey
+                <br>
+                ⬆️ Level Up: Enhance skills in your current role
+                <br>
+                🔄 Career Switch: Plan your transition to a new role
+            </small>
+        </div>
+    </form>
+</div>
+
+<script>
+document.querySelectorAll('input[name="path"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const currentRoleSection = document.getElementById('currentRoleSection');
+        const targetRoleSection = document.getElementById('targetRoleSection');
+        const skillsSection = document.querySelector('.skills-input');
+        const resumeSection = document.querySelector('.file-upload');
+        const mainButton = document.getElementById('mainButton');
+        const recommendButton = document.getElementById('recommendButton');
+        const currentRoleInput = document.getElementById('current_role');
+        const targetRoleInput = document.getElementById('target_role');
+        const skillsInput = document.getElementById('skills');
+        
+        // Reset form
+        currentRoleInput.value = '';
+        targetRoleInput.value = '';
+        skillsInput.value = '';
+        currentRoleInput.removeAttribute('required');
+        targetRoleInput.removeAttribute('required');
+        skillsInput.removeAttribute('required');
+        
+        // Default hide everything
+        currentRoleSection.style.display = 'none';
+        targetRoleSection.style.display = 'none';
+        skillsSection.style.display = 'none';
+        resumeSection.style.display = 'none';
+        mainButton.style.display = 'none';
+        recommendButton.style.display = 'none';
+        
+        // Apply path-specific logic
+        switch(this.value) {
+            case 'recommend':
+                // Show only skills input for recommendations
+                skillsSection.style.display = 'block';
+                resumeSection.style.display = 'none';
+                recommendButton.style.display = 'block';
+                recommendButton.textContent = '🎯 Generate Role Recommendations';
+                skillsInput.setAttribute('required', '');
+                document.querySelector('h2:nth-of-type(2)').textContent = '2. Tell Us Your Skills 💡';
+                break;
+
+            case 'beginner':
+                // Show only target role selection for beginners
+                targetRoleSection.style.display = 'block';
+                mainButton.style.display = 'block';
+                mainButton.textContent = '✨ Generate Missing Skills and Roadmap';
+                targetRoleInput.setAttribute('required', '');
+                document.querySelector('h2:nth-of-type(2)').textContent = '2. Choose Your Dream Role 🎯';
+                break;
+
+            case 'upskill':
+                // Show current role, skills input, and resume upload
+                currentRoleSection.style.display = 'block';
+                skillsSection.style.display = 'block';
+                resumeSection.style.display = 'block';
+                mainButton.style.display = 'block';
+                mainButton.textContent = '✨ Generate Missing Skills and Roadmap';
+                currentRoleInput.setAttribute('required', '');
+                document.querySelector('h2:nth-of-type(2)').textContent = '2. Current Role & Skills 🎯';
+                // Set target role same as current role
+                currentRoleInput.addEventListener('change', function() {
+                    targetRoleInput.value = this.value;
+                });
+                break;
+
+            case 'switch':
+                // Show current role, target role, and resume option
+                currentRoleSection.style.display = 'block';
+                targetRoleSection.style.display = 'block';
+                skillsSection.style.display = 'block';
+                resumeSection.style.display = 'block';
+                mainButton.style.display = 'block';
+                mainButton.textContent = '✨ Generate Missing Skills and Roadmap';
+                currentRoleInput.setAttribute('required', '');
+                targetRoleInput.setAttribute('required', '');
+                document.querySelector('h2:nth-of-type(2)').textContent = '2. Define Your Journey 🎯';
+                targetRoleInput.setAttribute('required', '');
+                break;
+        }
+    });
+});
+
+// Update file upload label when file is selected
+document.getElementById('resume').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name;
+    const label = this.previousElementSibling;
+    if (fileName) {
+        label.innerHTML = `<span class="upload-icon">📄</span> ${fileName}`;
+    }
+});
+</script>
+{% endblock %}
