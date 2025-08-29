@@ -58,3 +58,5 @@ def create_app():
     # TODO: Add monitoring/metrics endpoints
     
     return app
+
+app = create_app()
