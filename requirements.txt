@@ -1,0 +1,19 @@
+# Core build tools
+pip==24.2
+setuptools>=68.0.0
+wheel>=0.41.0
+
+
+# Web server
+gunicorn==22.0.0
+
+# Flask stack
+flask==2.3.3
+Werkzeug==2.3.7
+
+# ML + PDF + DOCX utilities
+sentence-transformers==2.2.2
+numpy==1.24.3
+python-docx==0.8.11
+torch==2.0.1
+python-dotenv==1.0.0
