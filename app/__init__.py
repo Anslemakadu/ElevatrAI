@@ -59,4 +59,20 @@ def create_app():
     
     return app
 
-# app = create_app()
+app = create_app()
+
+if __name__ == "__main__":
+    
+    # Load environment-specific settings
+    port = int(os.getenv("PORT", 5000))
+    debug = os.getenv("FLASK_ENV", "production") == "development"
+    
+    # Security: Only bind to localhost in development mode
+    # In production, we'll bind to all interfaces for container/cloud compatibility
+    host = '127.0.0.1' if debug else '0.0.0.0'
+    
+    # Start the development server
+    # Note: For production, use gunicorn (see Procfile)
+    app.run(host=host, port=port, debug=debug)
+    
+    

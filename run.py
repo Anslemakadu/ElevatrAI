@@ -27,24 +27,26 @@ Usage:
 Author: Anslem Akadu
 Project: ElevatrAI - AI-Powered Career Development Platform
 """
-print("=== run.py is being loaded ===")
-from app import create_app
-print("=== app imported successfully ===")
 
-# Initialize the Flask application with our factory pattern
-app = create_app()
-print("=== app created successfully ===")
+# import os
+# from app import create_app
 
-if __name__ == "__main__":
-    import os
-    # Load environment-specific settings
-    port = int(os.getenv("PORT", 5000))
-    debug = os.getenv("FLASK_ENV", "production") == "development"
+# # Initialize the Flask application with our factory pattern
+# app = create_app()
+
+# if __name__ == "__main__":
     
-    # Security: Only bind to localhost in development mode
-    # In production, we'll bind to all interfaces for container/cloud compatibility
-    host = '127.0.0.1' if debug else '0.0.0.0'
+#     # Load environment-specific settings
+#     port = int(os.getenv("PORT", 5000))
+#     debug = os.getenv("FLASK_ENV", "production") == "development"
     
-    # Start the development server
-    # Note: For production, use gunicorn (see Procfile)
-    app.run(host=host, port=port, debug=debug)
+#     # Security: Only bind to localhost in development mode
+#     # In production, we'll bind to all interfaces for container/cloud compatibility
+#     host = '127.0.0.1' if debug else '0.0.0.0'
+    
+#     # Start the development server
+#     # Note: For production, use gunicorn (see Procfile)
+#     app.run(host=host, port=port, debug=debug)
+    
+
+
